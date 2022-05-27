@@ -51,3 +51,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# this is the output
+main
+
+# vscode 
+.vscode/

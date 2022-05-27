@@ -1,8 +1,21 @@
 #include "wins.h"
 #include "ncurses.h"
+#include "controls.h"
 
 #define MIN_X 100
 #define MIN_Y 40
+
+WINDOW *oper_bar = NULL;    // 底部栏, 用于提示现在可用的操作
+
+void oper_bar_init(int max_y, int max_x)
+{
+    if (oper_bar != NULL)
+    {
+        return;
+    }
+
+    oper_bar = newwin(max_y, max_x, max_y - 1, 0);
+}
 
 void wprintw_hit_logo(WINDOW *win, int start_y, int start_x)
 {
@@ -20,20 +33,26 @@ void wprintw_hit_logo(WINDOW *win, int start_y, int start_x)
     mvwprintw(win, start_y + 11, start_x, "═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═");
 }
 
-void show_splash_win(int max_y, int max_x)
+/**
+ * @brief 打印欢迎界面
+ * 
+ * @return 是否可以正常运行
+ */
+int show_splash_win(int max_y, int max_x)
 {
+    /* 确保整个程序运行的时候具有足够的空间打印字符 */
     if (max_x < MIN_X || max_y < MIN_Y)
     {
         WINDOW *splash_src = newwin(max_y, max_x, 0, 0);
         box(splash_src, 0, 0);
         refresh();
         wrefresh(splash_src);
-        mvprintw(max_y / 2 - 1, (max_x - 49) / 2, "the window size is not enough for start software,");
+        mvprintw(max_y / 2 - 1, (max_x - 49) / 2, "the window size is not enough for starting the software,");
         mvprintw(max_y / 2, (max_x - 49) / 2, "please resize the window,");
         mvprintw(max_y / 2 + 1, (max_x - 49) / 2, "at least %d characters width and %d chars height", MIN_X, MIN_Y);
         mvprintw(max_y / 2 + 2, (max_x - 49) / 2, "press any key to quit...");
         getch();
-        return;
+        return false;
     }
     WINDOW *splash_scr = newwin(25, max_x - 6, (max_y - 25) / 2, 4);
     box(splash_scr, 0, 0);
@@ -49,7 +68,8 @@ void show_splash_win(int max_y, int max_x)
     refresh();
     wrefresh(splash_scr);
     getch();
-    return;
+    delwin(splash_scr);
+    return true;
 }
 
 void show_help_win(int max_y, int max_x)
@@ -83,7 +103,11 @@ void show_help_win(int max_y, int max_x)
     mvwprintw(inner_border, x++, 1, " 13. Read from a file");
     mvwprintw(inner_border, x++, 1, " 0. Exit");
     mvwprintw(inner_border, x++, 1, " h. Show this help again");
-    mvwprintw(inner_border, height - 5, width - 15, "[  OK  ]");
+    highlight_buttom(inner_border, height - 5, width  -15, "OK");
+
+    int bar_x = 0;
+    info_bar_wprint(oper_bar, "Enter", "Confirm", 1, &bar_x);
+
     refresh();
     wrefresh(out_border);
     wrefresh(inner_border);
@@ -91,7 +115,9 @@ void show_help_win(int max_y, int max_x)
     do
     {
         input = getch();
-    } while (input != '\n' && input != ' ');
+    } while (input != '\n');
+    delwin(out_border);
+    delwin(inner_border);
     
     return;
 }

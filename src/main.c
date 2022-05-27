@@ -3,7 +3,7 @@
 #include "wins.h"
 
 int main(int argc, char **argv)
-{
+{   
     setlocale(LC_ALL, "");
     initscr();
     noecho();
@@ -14,7 +14,8 @@ int main(int argc, char **argv)
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
 
-    show_splash_win(yMax, xMax);
+    if (!show_splash_win(yMax, xMax)) { return -1; };
+    oper_bar_init(yMax, xMax);
     show_help_win(yMax, xMax);
     endwin();
 
