@@ -1,6 +1,7 @@
 #include "wins.h"
-#include "ncurses.h"
 #include "controls.h"
+#include <ncurses.h>
+#include <stdlib.h>
 
 #define MIN_X 100
 #define MIN_Y 40
@@ -69,6 +70,7 @@ int show_splash_win(int max_y, int max_x)
     wrefresh(splash_scr);
     getch();
     delwin(splash_scr);
+    clear();
     return true;
 }
 
@@ -118,6 +120,79 @@ void show_help_win(int max_y, int max_x)
     } while (input != '\n');
     delwin(out_border);
     delwin(inner_border);
-    
+    clear();
+    refresh();
     return;
+}
+
+CommandWin *new_command_win(int max_y, int max_x)
+{
+    if (!has_colors())
+    {
+        wprintw(stdscr, "Sorry: Your terminal seems not support color output, which will decrease the effect of the program.");
+        getch();
+    }
+    start_color();
+    init_pair(1, COLOR_BLUE, COLOR_BLACK);
+    WINDOW *command_win = newwin(3, max_x - 5, max_y - 5, 2);
+    attron(COLOR_PAIR(1));
+    box(command_win, 0, 0);
+    refresh();
+    int x, y;
+    getbegyx(command_win, y, x);
+    move(y + 1, x + 11);
+    mvwprintw(command_win, 1, 1, "Input[0]:");
+    curs_set(1);
+    wrefresh(command_win);
+    keypad(command_win, true);
+    noraw();
+
+    echo();
+    int ch;
+    do
+    {
+        ch = wgetch(command_win);
+    } while (ch != '\n');
+    
+    attroff(COLOR_PAIR(1));
+    CommandWin *new_win = (CommandWin *)malloc(sizeof(CommandWin));
+    new_win->buffer_size = 19;
+    new_win->input = (char *)malloc(sizeof(char) * new_win->buffer_size);
+    return new_win;
+}
+
+WINDOW* show_cow(int max_y, int max_x)
+{
+    curs_set(0);
+    WINDOW *cow_win = newwin(10, 36, max_y - 15, max_x - 39);
+    box(cow_win, 0, 0);
+    cow_say(cow_win, "", '@', ' ');
+    refresh();
+    wrefresh(cow_win);
+    getch();
+}
+
+void cow_say(WINDOW *win, char* word, char eye, char togue)
+{
+    int x, y;
+    y = 9;
+    // getyx(win, y, x);
+    y -= 1;
+    x = 1;
+
+    mvwprintw(win, y--, 1, "                ||     ||");
+    mvwprintw(win, y--, 1, "                ||----w |");
+    mvwprintw(win, y--, 1, "            (__)\\       )\\/\\");
+    mvwprintw(win, y, 1, "         \\  (");
+    x += 13;
+    mvwprintw(win, y, x, "%c%c", eye, eye);
+    x += 2;
+    mvwprintw(win, y--, x, ")\\_______");
+    x = 1;
+    mvwprintw(win, y--, 1, "        \\   ^__^");
+}
+
+CowWin *new_cow_win(int max_y, int max_x)
+{
+    
 }

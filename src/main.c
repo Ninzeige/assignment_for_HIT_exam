@@ -17,6 +17,9 @@ int main(int argc, char **argv)
     if (!show_splash_win(yMax, xMax)) { return -1; };
     oper_bar_init(yMax, xMax);
     show_help_win(yMax, xMax);
+    // show_command_win(yMax, xMax);
+    // show_cow(yMax, xMax); 
+    
     endwin();
 
     return 0;

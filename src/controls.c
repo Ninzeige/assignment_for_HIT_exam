@@ -36,5 +36,6 @@ void info_bar_wprint(WINDOW *bar,char *operation, char *info, int num, int *x)
         mvwprintw(bar, 0, *x, "   ");
         *x += 3;
     }
+    refresh();
     wrefresh(bar);
 }
