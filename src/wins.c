@@ -6,6 +6,16 @@
 #define MIN_X 100
 #define MIN_Y 40
 
+#define TABLE_WIN 0
+#define COMMAND_WIN 1
+#define COW_WIN 2
+
+#define MAIN_GUIDE 0
+#define TABLE_GUIDE 1
+#define COW_GUIDE 2
+#define COMMAND_GUIDE 3
+#define FORTURE 4
+
 WINDOW *oper_bar = NULL;    // 底部栏, 用于提示现在可用的操作
 
 void oper_bar_init(int max_y, int max_x)
@@ -64,7 +74,7 @@ int show_splash_win(int max_y, int max_x)
     mvwprintw(splash_scr, 5, (max_x - 66) / 2, "Welcome to _/    _/  _/_/_/      _/       Grade Management system!");
 
     wprintw_hit_logo(splash_scr, 7, (max_x - 49) / 2);
-    mvwprintw(splash_scr, 22, 1, "Author: Chen Han, Harbin Institute of Technology, 2022/5");
+    mvwprintw(splash_scr, 22, 1, "Author: Chen Han, Harbin Institute of Technology, width22/5");
     mvwprintw(splash_scr, 23, 1, "press any key to start...");
     refresh();
     wrefresh(splash_scr);
@@ -105,10 +115,11 @@ void show_help_win(int max_y, int max_x)
     mvwprintw(inner_border, x++, 1, " 13. Read from a file");
     mvwprintw(inner_border, x++, 1, " 0. Exit");
     mvwprintw(inner_border, x++, 1, " h. Show this help again");
-    highlight_buttom(inner_border, height - 5, width  -15, "OK");
+    int x2 = width - 15;
+    highlight_buttom(inner_border, height - 5, &x2, "OK");
 
     int bar_x = 0;
-    info_bar_wprint(oper_bar, "Enter", "Confirm", 1, &bar_x);
+    info_bar_wprint(oper_bar, "Enter", "Confirm", &bar_x);
 
     refresh();
     wrefresh(out_border);
@@ -125,7 +136,7 @@ void show_help_win(int max_y, int max_x)
     return;
 }
 
-CommandWin *new_command_win(int max_y, int max_x)
+CommandWin *new_command_win(int height, int width, int start_y, int start_x)
 {
     if (!has_colors())
     {
@@ -134,7 +145,7 @@ CommandWin *new_command_win(int max_y, int max_x)
     }
     start_color();
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
-    WINDOW *command_win = newwin(3, max_x - 5, max_y - 5, 2);
+    WINDOW *command_win = newwin(height, width, start_y, start_x);
     attron(COLOR_PAIR(1));
     box(command_win, 0, 0);
     refresh();
@@ -192,7 +203,212 @@ void cow_say(WINDOW *win, char* word, char eye, char togue)
     mvwprintw(win, y--, 1, "        \\   ^__^");
 }
 
-CowWin *new_cow_win(int max_y, int max_x)
+CowWin *new_cow_win(int height, int width, int start_y, int start_x)
 {
     
+}
+
+MainWin *new_main_win(int max_y, int max_x)
+{
+    MainWin *result = (MainWin *)malloc(sizeof(MainWin));
+    result->command_win = new_command_win(3, max_x - 5, max_y - 5, 2);
+    result->cow_win = new_cow_win(10, 30, max_y - 16, max_x - 19);
+    result->table_win = new_table_win(max_y - 14, max_x - 32, 0, 0);
+    result->max_x = max_x;
+    result->max_y = max_y;
+    return result;
+}
+
+void main_win_show(MainWin *main_win)
+{
+    char input = 0;
+
+    while (input != 27)
+    {
+
+        switch (main_win->select_win)
+        {
+        case TABLE_WIN:
+            show_table_win(main_win->table_win, 1);
+            show_cow_win(main_win->cow_win, 0);
+            show_command_win(main_win->command_win, 0);
+            break;
+        case COW_WIN:
+            show_table_win(main_win->table_win, 0);
+            show_cow_win(main_win->cow_win, 1);
+            show_command_win(main_win->command_win, 0);
+            break;
+        case COMMAND_WIN:
+            show_table_win(main_win->table_win, 0);
+            show_cow_win(main_win->cow_win, 0);
+            show_command_win(main_win->command_win, 1);
+            break;
+        default:
+            show_table_win(main_win->table_win, 0);
+            show_cow_win(main_win->cow_win, 0);
+            show_command_win(main_win->command_win, 0);
+            break;
+        }
+    }
+}
+
+
+void command_operate(CommandWin *com_win)
+{
+    echo();
+    noraw();
+    keypad(com_win->win, true);
+    char input = 0;
+    while (input != 27 || input != '\n')
+    {
+        input = getch();
+
+    }
+
+    noecho();
+    keypad(com_win->win, false);
+}
+
+void table_operate(TableWin *tab_win)
+{
+    keypad(tab_win->win, true);
+    int input = 0;
+
+    // moving curses around
+    while (input != 27 && input != '\n')
+    {
+        input = wgetch(tab_win->win);
+        switch (input)
+        {
+        case KEY_UP:
+            if (tab_win->row > 0)
+            {
+                tab_win->row += -1;
+            }
+            break;
+        case KEY_DOWN:
+            if (tab_win->row < tab_win->max_row - 1)
+            {
+                tab_win->row += 1;
+            }
+            break;
+        case KEY_LEFT:
+            if (tab_win->col > 0)
+            {
+                tab_win->col += -1;
+            }
+            break;
+        case KEY_RIGHT:
+            if (tab_win->col < tab_win->max_col - 1)
+            {
+                tab_win->col += -1;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    // enroll data
+    if (input == '\n')
+    {
+        
+        table_operate(tab_win);
+        return;
+    }
+    else
+    {
+        return;
+    }
+}
+
+bool show_message_box(int max_y, int max_x, char *str)
+{
+    int const width = 30;
+    int length = strlen(str);
+    int lines = length / width + 1;              // how many lines to be printed
+    char *output = (char *)malloc(sizeof(char) * (lines * (width + 1)));
+    if (length > width)
+    {
+        lines = length / width + 1;
+        for (int i = 0; i < lines; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                output[i * (width + 1) + j] = str[i * width + j];
+                if (str[i * width + j] == '\0')
+                {
+                    break;
+                }
+            }
+            output[(i + 1) * width + 1 - 1] = '\0';
+        }
+    }
+    int x = 0;
+    info_bar_wprint(oper_bar, "OK", "Comfirm", &x);
+    info_bar_wprint(oper_bar, "Left/Right", "Switch", &x);
+    WINDOW *msg_box = newwin(lines + 4, width + 6, (max_y - lines - 3) / 2, (max_x - 22) / 2);
+    bool selected = true;   // the selected option, true = OK, false = cancel
+    box(msg_box, 0, 0);
+
+    for (int i = 0; i < lines; i++)
+    {
+        mvwprintw(msg_box, i + 1, 3, "%s", output + (width + 1) * i);
+    }
+    
+    x = width - 14;
+    buttom(msg_box, lines + 2, &x, "Cancel");
+    highlight_buttom(msg_box, lines + 2, &x, "OK");
+    refresh();
+    wrefresh(msg_box);
+    
+    keypad(msg_box, true);
+    int input = wgetch(msg_box);
+    while (input != '\n')
+    {
+        if (input == KEY_LEFT)
+        {   
+            selected = false;
+            x = width - 14;
+            highlight_buttom(msg_box, lines + 2, &x, "Cancel");
+            buttom(msg_box, lines + 2, &x, "OK");
+        }
+        else if (input == KEY_RIGHT)
+        {
+            selected = true;
+            x = width - 14;
+            buttom(msg_box, lines + 2, &x, "Cancel");
+            highlight_buttom(msg_box, lines + 2, &x, "OK");
+        }
+        wrefresh(msg_box);
+        input = wgetch(msg_box);
+    }
+
+    keypad(msg_box, false);
+    free(output);
+    delwin(msg_box);
+    refresh();
+    return selected;
+}
+
+void show_table_win(TableWin *tab_win, int highlight)
+{
+
+}
+void show_cow_win(CowWin *cow_win, int highlight)
+{
+
+}
+void show_command_win(CommandWin *com_win, int highlight)
+{
+
+}
+TableWin *new_table_win(int height, int width, int start_y, int start_x)
+{
+
+}
+
+void main_oper(MainWin *main_win)
+{
+
 }

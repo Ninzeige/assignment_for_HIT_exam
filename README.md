@@ -1,9 +1,15 @@
 # HIT 成绩管理系统
 
+# before use...
+
+For and the display effect, please make sure to use English only, otherwise the format will failed.
+
 ## 特点
 
 - 极其花哨的Splash Screen
 - 
+
+## 
 
 ## 依赖库
 

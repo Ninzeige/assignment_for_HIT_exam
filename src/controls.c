@@ -1,15 +1,26 @@
 #include "controls.h"
 #include <string.h>
 
-void highlight_buttom(WINDOW *win, int y, int x, char *str)
+void highlight_buttom(WINDOW *win, int y, int *x, char *str)
 {
     wattron(win, A_REVERSE);
-    mvwprintw(win, y, x, "[ ");
-    x += 2;
-    mvwprintw(win, y, x, str);
-    x += strlen(str);
-    mvwprintw(win, y, x, " ]");
+    mvwprintw(win, y, *x, "[ ");
+    *x += 2;
+    mvwprintw(win, y, *x, str);
+    *x += strlen(str);
+    mvwprintw(win, y, *x, " ]");
     wattroff(win, A_REVERSE);
+    *x += 3;
+}
+
+void buttom(WINDOW *win, int y, int *x, char *str)
+{
+    mvwprintw(win, y, *x, "[ ");
+    *x += 2;
+    mvwprintw(win, y, *x, str);
+    *x += strlen(str);
+    mvwprintw(win, y, *x, " ]");
+    *x += 3;
 }
 
 /**
@@ -21,21 +32,18 @@ void highlight_buttom(WINDOW *win, int y, int x, char *str)
  * @param num 数组长度
  * @param x 打印的x坐标
  */
-void info_bar_wprint(WINDOW *bar,char *operation, char *info, int num, int *x)
+void info_bar_wprint(WINDOW *bar,char *operation, char *info, int *x)
 {
-    for (int i = 0; i < num; i++)
-    {
-        mvwprintw(bar, 0, *x, " [ ");
-        *x += 3;
-        mvwprintw(bar, 0, *x, "%s", operation);
-        *x += strlen(operation);
-        mvwprintw(bar, 0, *x, " ] ");
-        *x += 3;
-        mvwprintw(bar, 0, *x, "%s", info);
-        *x += strlen(info);
-        mvwprintw(bar, 0, *x, "   ");
-        *x += 3;
-    }
+    mvwprintw(bar, 0, *x, " [ ");
+    *x += 3;
+    mvwprintw(bar, 0, *x, "%s", operation);
+    *x += strlen(operation);
+    mvwprintw(bar, 0, *x, " ] ");
+    *x += 3;
+    mvwprintw(bar, 0, *x, "%s", info);
+    *x += strlen(info);
+    mvwprintw(bar, 0, *x, "   ");
+    *x += 3;
     refresh();
     wrefresh(bar);
 }
