@@ -57,3 +57,6 @@ main
 
 # vscode 
 .vscode/
+test_case.c
+test
+demo.c

@@ -1,7 +1,10 @@
+#include <stdlib.h>
+#include <ncurses.h>
+#include <ctype.h>
+#include <form.h>
 #include "wins.h"
 #include "controls.h"
-#include <ncurses.h>
-#include <stdlib.h>
+#include "interface.h"
 
 #define MIN_X 100
 #define MIN_Y 40
@@ -66,6 +69,7 @@ int show_splash_win(int max_y, int max_x)
         return false;
     }
     WINDOW *splash_scr = newwin(25, max_x - 6, (max_y - 25) / 2, 4);
+    initialize_colors();
     box(splash_scr, 0, 0);
     mvwprintw(splash_scr, 1, (max_x - 66) / 2, "               _/    _/  _/_/_/  _/_/_/_/_/");
     mvwprintw(splash_scr, 2, (max_x - 66) / 2, "              _/    _/    _/        _/     ");
@@ -73,7 +77,9 @@ int show_splash_win(int max_y, int max_x)
     mvwprintw(splash_scr, 4, (max_x - 66) / 2, "            _/    _/    _/        _/       ");
     mvwprintw(splash_scr, 5, (max_x - 66) / 2, "Welcome to _/    _/  _/_/_/      _/       Grade Management system!");
 
+    wattr_set(splash_scr, A_NORMAL, blue_color, NULL);
     wprintw_hit_logo(splash_scr, 7, (max_x - 49) / 2);
+    wattr_set(splash_scr, A_NORMAL, -1, NULL);
     mvwprintw(splash_scr, 22, 1, "Author: Chen Han, Harbin Institute of Technology, width22/5");
     mvwprintw(splash_scr, 23, 1, "press any key to start...");
     refresh();
@@ -136,41 +142,6 @@ void show_help_win(int max_y, int max_x)
     return;
 }
 
-CommandWin *new_command_win(int height, int width, int start_y, int start_x)
-{
-    if (!has_colors())
-    {
-        wprintw(stdscr, "Sorry: Your terminal seems not support color output, which will decrease the effect of the program.");
-        getch();
-    }
-    start_color();
-    init_pair(1, COLOR_BLUE, COLOR_BLACK);
-    WINDOW *command_win = newwin(height, width, start_y, start_x);
-    attron(COLOR_PAIR(1));
-    box(command_win, 0, 0);
-    refresh();
-    int x, y;
-    getbegyx(command_win, y, x);
-    move(y + 1, x + 11);
-    mvwprintw(command_win, 1, 1, "Input[0]:");
-    curs_set(1);
-    wrefresh(command_win);
-    keypad(command_win, true);
-    noraw();
-
-    echo();
-    int ch;
-    do
-    {
-        ch = wgetch(command_win);
-    } while (ch != '\n');
-    
-    attroff(COLOR_PAIR(1));
-    CommandWin *new_win = (CommandWin *)malloc(sizeof(CommandWin));
-    new_win->buffer_size = 19;
-    new_win->input = (char *)malloc(sizeof(char) * new_win->buffer_size);
-    return new_win;
-}
 
 WINDOW* show_cow(int max_y, int max_x)
 {
@@ -203,9 +174,34 @@ void cow_say(WINDOW *win, char* word, char eye, char togue)
     mvwprintw(win, y--, 1, "        \\   ^__^");
 }
 
+CommandWin *new_command_win(int height, int width, int start_y, int start_x)
+{
+    WINDOW *command_win = newwin(height, width, start_y, start_x);
+    CommandWin *new_win = (CommandWin *)malloc(sizeof(CommandWin));
+    new_win->buffer_size = 19;
+    new_win->input = (char *)malloc(sizeof(char) * new_win->buffer_size);
+    return new_win;
+}
+
 CowWin *new_cow_win(int height, int width, int start_y, int start_x)
 {
+    WINDOW *cow_win = newwin(height, width, start_y, start_x);
+    CowWin *res = (CowWin *)malloc(sizeof(CowWin));
+    res->win = cow_win;
+    res->word_id = MAIN_GUIDE;
+    return res;
+}
+
+TableWin *new_table_win(int height, int width, int start_y, int start_x)
+{
+    WINDOW *table_win = newwin(height, width, start_y, start_x);
+    // ask the user to input the subject number
     
+    TableWin *res = (TableWin *)malloc(sizeof(TableWin));
+    res->row = 0;
+    res->col = 0;
+    res->max_col = width - 3;
+    res->max_row = height - 3;
 }
 
 MainWin *new_main_win(int max_y, int max_x)
@@ -258,11 +254,10 @@ void command_operate(CommandWin *com_win)
     echo();
     noraw();
     keypad(com_win->win, true);
-    char input = 0;
+    int input = 0;
     while (input != 27 || input != '\n')
     {
-        input = getch();
-
+        input = wgetch(com_win->win);
     }
 
     noecho();
@@ -363,7 +358,10 @@ bool show_message_box(int max_y, int max_x, char *str)
     wrefresh(msg_box);
     
     keypad(msg_box, true);
+    noecho();
     int input = wgetch(msg_box);
+    refresh();
+
     while (input != '\n')
     {
         if (input == KEY_LEFT)
@@ -387,28 +385,147 @@ bool show_message_box(int max_y, int max_x, char *str)
     keypad(msg_box, false);
     free(output);
     delwin(msg_box);
+    wclear(oper_bar);
     refresh();
     return selected;
 }
 
 void show_table_win(TableWin *tab_win, int highlight)
 {
-
+    if(highlight)
+    {
+        wattr_set(tab_win->win, A_NORMAL, cyan_color, NULL);
+        box(tab_win->win, 0, 0);
+        wattr_set(tab_win->win, A_NORMAL, -1, NULL);
+    }
+    else
+    {
+        box(tab_win->win, 0, 0);
+    }
+    wrefresh(tab_win->win);
 }
 void show_cow_win(CowWin *cow_win, int highlight)
 {
-
+    if(highlight)
+    {
+        wattr_set(cow_win->win, A_NORMAL, cyan_color, NULL);
+        box(cow_win->win, 0, 0);
+        wattr_set(cow_win->win, A_NORMAL, -1, NULL);
+    }
+    else
+    {
+        box(cow_win->win, 0, 0);
+    }
+    wrefresh(cow_win->win);
 }
 void show_command_win(CommandWin *com_win, int highlight)
 {
-
-}
-TableWin *new_table_win(int height, int width, int start_y, int start_x)
-{
-
+    if(highlight)
+    {
+        wattr_set(com_win->win, A_NORMAL, cyan_color, NULL);
+        box(com_win->win, 0, 0);
+        wattr_set(com_win->win, A_NORMAL, -1, NULL);
+    }
+    else
+    {
+        box(com_win->win, 0, 0);
+    }
+    wrefresh(com_win->win);
 }
 
 void main_oper(MainWin *main_win)
 {
 
 }
+
+
+int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
+{   
+    int length = strlen(info);
+
+    const int height = 5;
+
+    curs_set(1);
+    WINDOW *win = newwin(height, length + 5, (max_y - height) / 2, (max_x - length - 5) / 2);
+    box(win, 0, 0);
+    FIELD *input[2];
+    input[0] = new_field(1, 17, 0, 0, 0, 0);
+    input[1] = new_field(1, 7, 2, 0, 0, 0);
+    input[2] = NULL;
+
+    set_field_buffer(input[0], 0, info);
+    set_field_buffer(input[1], 0, "");
+    
+    set_field_opts(input[0], O_VISIBLE | O_PUBLIC | O_AUTOSKIP);
+    set_field_opts(input[1], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
+
+    set_field_back(input[1], A_UNDERLINE);
+    keypad(win, true);
+    noecho();
+    noraw();
+    cbreak();
+
+    if (type == TYPE_NUMERIC)
+    {
+        set_field_type(input[1], type, 1, 0, INTMAX_MAX); // to be filled
+    }
+
+    FORM *form = new_form(input);
+    set_form_win(form, win);
+    set_form_sub(form, derwin(win, height - 2, length + 2, 1, 1));
+    post_form(form);
+
+    refresh();
+    wrefresh(win);
+
+    int _input = getch();
+    int result = 0;
+
+    form_driver(form, REQ_NEXT_FIELD);
+    while (true)
+    {
+        noraw();
+        noecho();
+        cbreak();
+        if (_input == '\n')
+        {
+            if (field_buffer(input[1], 0) == "invalid!")
+            {
+                form_driver(form, REQ_DEL_LINE);
+            }
+            int i = 0;
+            char *str = trim_whitespaces(field_buffer(input[1], 0));
+            int is_num = 1;
+            for (i = 0; str[i]; i++)
+            {
+                if (!isdigit(str[i]))
+                {
+                    is_num = 0;
+                    break;
+                }
+            }
+            if (is_num && i)
+            {
+                printf("the i = %d", i);
+                break;
+            }
+            else
+            {
+                set_field_buffer(input[1], 0, "invalid!");
+            }
+        }
+        driver(_input, form, input);
+        wrefresh(win);
+        _input = getch();
+    }
+
+    unpost_form(form);
+    free_form(form);
+    for (int i = 0; i < 2; i++)
+    {
+        free_field(input[i]);
+    }
+    delwin(win);
+
+}
+

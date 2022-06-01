@@ -1,6 +1,7 @@
 #ifndef HIT_WINS_H_
 #define HIT_WINS_H_
 #include <ncurses.h>
+#include <form.h>
 
 extern WINDOW *oper_bar;
 
@@ -20,6 +21,8 @@ typedef struct
     char **subject_name;
     int max_col;
     int max_row;
+    FIELD *charts;  // 记录学生的成绩
+    FORM *form;
 }TableWin;
 
 typedef struct
@@ -48,6 +51,7 @@ void show_help_win(int max_y, int max_x);
 void show_table_win(TableWin *tab_win, int highlight);
 void show_cow_win(CowWin *cow_win, int highlight);
 void show_command_win(CommandWin *com_win, int highlight);
+int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type);
 void cow_say(WINDOW *win, char *word, char eye, char togue);
 
 CommandWin *new_command_win(int height, int width, int start_y, int start_x);

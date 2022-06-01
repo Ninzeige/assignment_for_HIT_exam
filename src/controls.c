@@ -47,3 +47,19 @@ void info_bar_wprint(WINDOW *bar,char *operation, char *info, int *x)
     refresh();
     wrefresh(bar);
 }
+
+int get_input(WINDOW *win, int start_y, int start_x, char *dest, int length)
+{
+    wmove(win, start_y, start_x);
+    noraw();
+    int x = start_x;
+
+    int input = 0, input_ptr = 0;
+    while (input != '\n' && input != 27)
+    {
+        input = wgetch(win);
+        
+    }
+
+    noecho();
+}
