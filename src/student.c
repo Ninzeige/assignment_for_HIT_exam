@@ -8,11 +8,13 @@
 void try_converse(student *stu)
 {
     // read id
-    str_to_int(stu->_input[0], MAX_LENGTH, &stu->id);
+    if (!str_to_int(stu->_input[0], MAX_LENGTH, &stu->id)) { stu->_is_valid = 0; }
+    for (int i = 0; i < stu->_sub_num; i++)
+    {
+        if (!str_to_int(stu->_input[i + 2], MAX_LENGTH, &stu->sub[i])) { stu->_is_valid = 0; }
+    }
     if (!stu->_is_valid) { return; }
     strcpy(stu->name, stu->_input[1]);
-
-
 }
 
 /**
@@ -73,4 +75,16 @@ void delete_student(student *stu)
     }
     free(stu);
     return;
+}
+
+int is_stu_valid(student *stu)
+{
+    int valid = 1;
+    if (stu->id < 0) { valid = 0; }
+    if (stu->name == NULL) { valid = 0; }
+    for (int i = 0; i < stu->_sub_num; i++)
+    {
+        if (stu->sub[i] < 0) { valid = 0; }
+    }
+    return valid;
 }

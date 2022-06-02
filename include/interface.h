@@ -2,14 +2,16 @@
 #define HIT_ITF_H_
 #include <form.h>
 
-enum interface_color {
-  cyan_color = 1,
-  yellow_color,
-  magenta_color,
-  green_color,
-  red_color,
-  blue_color,
+enum interface_color
+{
+    cyan_color = 1,
+    yellow_color,
+    magenta_color,
+    green_color,
+    red_color,
+    blue_color,
 };
+
 
 void initialize_colors();
 

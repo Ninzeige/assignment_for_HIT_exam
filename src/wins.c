@@ -9,8 +9,8 @@
 #define MIN_X 100
 #define MIN_Y 40
 
-#define TABLE_WIN 0
-#define COMMAND_WIN 1
+#define COMMAND_WIN 0
+#define TABLE_WIN 1
 #define COW_WIN 2
 
 #define MAIN_GUIDE 0
@@ -177,10 +177,11 @@ void cow_say(WINDOW *win, char* word, char eye, char togue)
 CommandWin *new_command_win(int height, int width, int start_y, int start_x)
 {
     WINDOW *command_win = newwin(height, width, start_y, start_x);
-    CommandWin *new_win = (CommandWin *)malloc(sizeof(CommandWin));
-    new_win->buffer_size = 19;
-    new_win->input = (char *)malloc(sizeof(char) * new_win->buffer_size);
-    return new_win;
+    CommandWin *res = (CommandWin *)malloc(sizeof(CommandWin));
+    res->buffer_size = 19;
+    res->win = command_win;
+    res->input = (char *)malloc(sizeof(char) * res->buffer_size);
+    return res;
 }
 
 CowWin *new_cow_win(int height, int width, int start_y, int start_x)
@@ -192,62 +193,61 @@ CowWin *new_cow_win(int height, int width, int start_y, int start_x)
     return res;
 }
 
-TableWin *new_table_win(int height, int width, int start_y, int start_x)
+TableWin *new_table_win(int height, int width, int start_y, int start_x, int sub_num, int stu_num)
 {
     WINDOW *table_win = newwin(height, width, start_y, start_x);
-    // ask the user to input the subject number
     
     TableWin *res = (TableWin *)malloc(sizeof(TableWin));
     res->row = 0;
     res->col = 0;
     res->max_col = width - 3;
     res->max_row = height - 3;
+    res->win = table_win;
+    res->stu_num = stu_num;
+    res->sub_num = sub_num;
+
+    return res;
 }
 
-MainWin *new_main_win(int max_y, int max_x)
+MainWin *new_main_win(int max_y, int max_x, int sub_num, int stu_num)
 {
     MainWin *result = (MainWin *)malloc(sizeof(MainWin));
     result->command_win = new_command_win(3, max_x - 5, max_y - 5, 2);
-    result->cow_win = new_cow_win(10, 30, max_y - 16, max_x - 19);
-    result->table_win = new_table_win(max_y - 14, max_x - 32, 0, 0);
+    result->cow_win = new_cow_win(12, 30, max_y - 18, max_x - 33);
+    result->table_win = new_table_win(max_y - 19, max_x - 4, 1, 1, sub_num, stu_num);
     result->max_x = max_x;
     result->max_y = max_y;
     return result;
 }
 
-void main_win_show(MainWin *main_win)
+void show_main_win(MainWin *main_win)
 {
-    char input = 0;
 
-    while (input != 27)
+    switch (main_win->select_win)
     {
-
-        switch (main_win->select_win)
-        {
-        case TABLE_WIN:
-            show_table_win(main_win->table_win, 1);
-            show_cow_win(main_win->cow_win, 0);
-            show_command_win(main_win->command_win, 0);
-            break;
-        case COW_WIN:
-            show_table_win(main_win->table_win, 0);
-            show_cow_win(main_win->cow_win, 1);
-            show_command_win(main_win->command_win, 0);
-            break;
-        case COMMAND_WIN:
-            show_table_win(main_win->table_win, 0);
-            show_cow_win(main_win->cow_win, 0);
-            show_command_win(main_win->command_win, 1);
-            break;
-        default:
-            show_table_win(main_win->table_win, 0);
-            show_cow_win(main_win->cow_win, 0);
-            show_command_win(main_win->command_win, 0);
-            break;
-        }
+    case COMMAND_WIN:
+        show_command_win(main_win->command_win, 0);
+        show_table_win(main_win->table_win, 0);
+        show_cow_win(main_win->cow_win, 0);
+        break;
+    case TABLE_WIN:
+        show_command_win(main_win->command_win, 0);
+        show_table_win(main_win->table_win, 0);
+        show_cow_win(main_win->cow_win, 0);
+        break;
+    case COW_WIN:
+        show_command_win(main_win->command_win, 0);
+        show_table_win(main_win->table_win, 0);
+        show_cow_win(main_win->cow_win, 0);
+        break;
+    default:
+        show_command_win(main_win->command_win, 0);
+        show_table_win(main_win->table_win, 0);
+        show_cow_win(main_win->cow_win, 0);
+        break;
     }
+    refresh();
 }
-
 
 void command_operate(CommandWin *com_win)
 {
@@ -302,6 +302,7 @@ void table_operate(TableWin *tab_win)
         default:
             break;
         }
+        wrefresh(tab_win->win);
     }
 
     // enroll data
@@ -319,6 +320,7 @@ void table_operate(TableWin *tab_win)
 
 bool show_message_box(int max_y, int max_x, char *str)
 {
+    wclear(oper_bar);
     int const width = 30;
     int length = strlen(str);
     int lines = length / width + 1;              // how many lines to be printed
@@ -336,10 +338,15 @@ bool show_message_box(int max_y, int max_x, char *str)
                     break;
                 }
             }
-            output[(i + 1) * width + 1 - 1] = '\0';
+            output[(i + 1) * (width + 1) - 1] = '\0';
         }
     }
+    else
+    {
+        strcpy(output, str);
+    }
     int x = 0;
+    
     info_bar_wprint(oper_bar, "OK", "Comfirm", &x);
     info_bar_wprint(oper_bar, "Left/Right", "Switch", &x);
     WINDOW *msg_box = newwin(lines + 4, width + 6, (max_y - lines - 3) / 2, (max_x - 22) / 2);
@@ -381,12 +388,12 @@ bool show_message_box(int max_y, int max_x, char *str)
         wrefresh(msg_box);
         input = wgetch(msg_box);
     }
-
+    refresh();
+    wclear(msg_box);
     keypad(msg_box, false);
     free(output);
     delwin(msg_box);
     wclear(oper_bar);
-    refresh();
     return selected;
 }
 
@@ -394,7 +401,7 @@ void show_table_win(TableWin *tab_win, int highlight)
 {
     if(highlight)
     {
-        wattr_set(tab_win->win, A_NORMAL, cyan_color, NULL);
+        wattr_set(tab_win->win, A_NORMAL, blue_color, NULL);
         box(tab_win->win, 0, 0);
         wattr_set(tab_win->win, A_NORMAL, -1, NULL);
     }
@@ -402,13 +409,35 @@ void show_table_win(TableWin *tab_win, int highlight)
     {
         box(tab_win->win, 0, 0);
     }
+    // print header
+    for (int i = 0; i < tab_win->stu_num; i++)
+    {
+        if (i & 1)
+        {
+            wattr_set(tab_win->win, A_NORMAL, blue_color, NULL);
+        }
+        else
+        {
+            wattr_set(tab_win->win, A_NORMAL, green_color, NULL);
+        }
+        for (int j = 0; j < tab_win->col; j++)
+        {
+            if (i == tab_win->row && j == tab_win->col)
+            {
+                wattr_on(tab_win->win, A_STANDOUT, NULL);
+                wattr_off(tab_win->win, A_NORMAL, NULL);
+            }
+        }
+    }
+    wattr_set(tab_win->win, A_NORMAL, -1, NULL);
+    refresh();
     wrefresh(tab_win->win);
 }
 void show_cow_win(CowWin *cow_win, int highlight)
 {
     if(highlight)
     {
-        wattr_set(cow_win->win, A_NORMAL, cyan_color, NULL);
+        wattr_set(cow_win->win, A_NORMAL, blue_color, NULL);
         box(cow_win->win, 0, 0);
         wattr_set(cow_win->win, A_NORMAL, -1, NULL);
     }
@@ -422,7 +451,7 @@ void show_command_win(CommandWin *com_win, int highlight)
 {
     if(highlight)
     {
-        wattr_set(com_win->win, A_NORMAL, cyan_color, NULL);
+        wattr_set(com_win->win, A_NORMAL, blue_color, NULL);
         box(com_win->win, 0, 0);
         wattr_set(com_win->win, A_NORMAL, -1, NULL);
     }
@@ -435,12 +464,68 @@ void show_command_win(CommandWin *com_win, int highlight)
 
 void main_oper(MainWin *main_win)
 {
+    curs_set(0);
+    int ch = 0;
+    while (true)
+    {
+        int oper_x = 0;
+        info_bar_wprint(oper_bar, "Space", "Switch windows", &oper_x);
+        info_bar_wprint(oper_bar, "Enter", "Select", &oper_x);
+        info_bar_wprint(oper_bar, "Q/q/Esc", "Quit", &oper_x);
+        if (ch == 27 || ch == 'q' || ch == 'Q')
+        {
+            if (show_message_box(main_win->max_y, main_win->max_x, "Quit?"))
+            {
+                break;
+            }
+            clear();
+        }
+        switch (ch)
+        {
+        case ' ':
+            main_win->select_win++;
+            if (main_win->select_win > 2)
+            {
+                main_win->select_win = 0;
+            }
+            break;
+        case '\n':
+            switch (main_win->select_win)
+            {
+            case COMMAND_WIN:
+                // command_operate(main_win->command_win);
+                break;
+            case COW_WIN:
+                // cow_operate(main_win->cow_win);
+                break;
+            case TABLE_WIN:
+                // table_operate(main_win->table_win);
+                break;
+            default:
+                break;
+            }
+            break;
+        case 'h':
+            show_help_win(main_win->max_y, main_win->max_x);
+            break;
+        }
+        refresh();
+        show_main_win(main_win);
+        ch = getch();
+    }
+}
+
+void cow_operate(CowWin *cow_win)
+{
 
 }
 
 
 int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
 {   
+    wclear(oper_bar);
+    int oper_x = 0;
+    info_bar_wprint(oper_bar, "Enter", "Comfirm", &oper_x);
     int length = strlen(info);
     const int height = 5;
     int result;
@@ -474,7 +559,6 @@ int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
     char buffer[200];
 
     int _input = getch();
-    int result = 0;
 
     form_driver(form, REQ_NEXT_FIELD);
     while (true)

@@ -17,10 +17,13 @@ int main(int argc, char **argv)
     getmaxyx(stdscr, yMax, xMax);
 
     if (!show_splash_win(yMax, xMax)) { return -1; };
-    show_input_box(yMax, xMax, "input subject number", TYPE_NUMERIC);
     oper_bar_init(yMax, xMax);
-    MainWin *main_win = new_main_win(yMax, xMax);
+    int sub_num = show_input_box(yMax, xMax, "input subject number", TYPE_NUMERIC); // 获取科目数量
+    int stu_num = show_input_box(yMax, xMax, "input student number", TYPE_NUMERIC); // 获取学生数量
+    MainWin *main_win = new_main_win(yMax, xMax, sub_num, stu_num);
     show_help_win(yMax, xMax);
+    main_oper(main_win);
+
     endwin();
 
     return 0;
