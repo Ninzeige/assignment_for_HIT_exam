@@ -3,8 +3,9 @@
 #include <ncurses.h>
 #include <string.h>
 #include "interface.h"
+#define _COPY__
 
-void initialize_colors()
+_COPY__ void initialize_colors()
 {
     start_color();
     short background_color;
@@ -24,8 +25,9 @@ void initialize_colors()
     init_pair(magenta_color, COLOR_MAGENTA, background_color);
 }
 
-void driver(int ch, FORM *form)
+_COPY__ void driver(int ch, FORM *form)
 {
+    static int x = 0;
     switch (ch)
     {
     case KEY_DOWN:
@@ -63,7 +65,7 @@ void driver(int ch, FORM *form)
     }
 }
 
-char *trim_whitespaces(char *str)
+_COPY__ char *trim_whitespaces(char *str)
 {
     char *end;
 

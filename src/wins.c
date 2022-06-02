@@ -442,15 +442,15 @@ void main_oper(MainWin *main_win)
 int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
 {   
     int length = strlen(info);
-
     const int height = 5;
+    int result;
 
     curs_set(1);
     WINDOW *win = newwin(height, length + 5, (max_y - height) / 2, (max_x - length - 5) / 2);
     box(win, 0, 0);
     FIELD *input[2];
     input[0] = new_field(1, 17, 0, 0, 0, 0);
-    input[1] = new_field(1, 7, 2, 0, 0, 0);
+    input[1] = new_field(1, 8, 2, 4, 0, 0);
     input[2] = NULL;
 
     set_field_buffer(input[0], 0, info);
@@ -460,15 +460,9 @@ int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
     set_field_opts(input[1], O_VISIBLE | O_PUBLIC | O_EDIT | O_ACTIVE);
 
     set_field_back(input[1], A_UNDERLINE);
-    keypad(win, true);
+    keypad(stdscr, true);
     noecho();
-    noraw();
     cbreak();
-
-    if (type == TYPE_NUMERIC)
-    {
-        set_field_type(input[1], type, 1, 0, INTMAX_MAX); // to be filled
-    }
 
     FORM *form = new_form(input);
     set_form_win(form, win);
@@ -477,6 +471,7 @@ int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
 
     refresh();
     wrefresh(win);
+    char buffer[200];
 
     int _input = getch();
     int result = 0;
@@ -484,37 +479,39 @@ int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
     form_driver(form, REQ_NEXT_FIELD);
     while (true)
     {
-        noraw();
-        noecho();
-        cbreak();
+        char *str_input = trim_whitespaces(field_buffer(input[1], 0));
+        if (!strcmp(str_input, "invalid"))
+        {
+            form_driver(form, REQ_DEL_LINE);
+            set_field_buffer(input[1], 0, "");
+            wrefresh(win);
+        }
         if (_input == '\n')
         {
-            if (field_buffer(input[1], 0) == "invalid!")
-            {
-                form_driver(form, REQ_DEL_LINE);
-            }
+            form_driver(form, REQ_NEXT_FIELD);
+            form_driver(form, REQ_PREV_FIELD);
+            char *str_input = trim_whitespaces(field_buffer(input[1], 0));
             int i = 0;
-            char *str = trim_whitespaces(field_buffer(input[1], 0));
             int is_num = 1;
-            for (i = 0; str[i]; i++)
+            for (i = 0; str_input[i]; i++)
             {
-                if (!isdigit(str[i]))
+                if (str_input[i] < '0' || str_input[i] > '9')
                 {
                     is_num = 0;
-                    break;
+                    // break;
                 }
             }
             if (is_num && i)
             {
-                printf("the i = %d", i);
+                sscanf(str_input, "%d", &result);
                 break;
             }
             else
             {
-                set_field_buffer(input[1], 0, "invalid!");
+                set_field_buffer(input[1], 0, "invalid");
             }
         }
-        driver(_input, form, input);
+        driver(_input, form);
         wrefresh(win);
         _input = getch();
     }
@@ -526,6 +523,6 @@ int show_input_box(int max_y, int max_x, char *info, FIELDTYPE *type)
         free_field(input[i]);
     }
     delwin(win);
-
+    return result;
 }
 
