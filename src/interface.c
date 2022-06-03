@@ -27,7 +27,6 @@ _COPY__ void initialize_colors()
 
 _COPY__ void driver(int ch, FORM *form)
 {
-    static int x = 0;
     switch (ch)
     {
     case KEY_DOWN:
@@ -86,4 +85,37 @@ _COPY__ char *trim_whitespaces(char *str)
     *(end + 1) = '\0';
 
     return str;
+}
+
+void driver_1d(int ch, FORM *form)
+{
+    switch (ch)
+    {
+    case KEY_DOWN:
+        break;
+    case KEY_UP:
+        break;
+    case KEY_LEFT:
+        form_driver(form, REQ_PREV_CHAR);
+        break;
+
+    case KEY_RIGHT:
+        form_driver(form, REQ_NEXT_CHAR);
+        break;
+
+    // Delete the char before cursor
+    case KEY_BACKSPACE:
+    case 127:
+        form_driver(form, REQ_DEL_PREV);
+        break;
+
+    // Delete the char under the cursor
+    case KEY_DC:
+        form_driver(form, REQ_DEL_CHAR);
+        break;
+
+    default:
+        form_driver(form, ch);
+        break;
+    }
 }

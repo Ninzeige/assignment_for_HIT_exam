@@ -16,6 +16,7 @@ enum interface_color
 void initialize_colors();
 
 void driver(int ch, FORM *form);
+void driver_1d(int ch, FORM *form);
 char *trim_whitespaces(char *str);
 
 #endif /* HIT_ITF_H_ */

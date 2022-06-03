@@ -18,8 +18,8 @@ int main(int argc, char **argv)
 
     if (!show_splash_win(yMax, xMax)) { return -1; };
     oper_bar_init(yMax, xMax);
-    int sub_num = show_input_box(yMax, xMax, "input subject number", TYPE_NUMERIC); // 获取科目数量
-    int stu_num = show_input_box(yMax, xMax, "input student number", TYPE_NUMERIC); // 获取学生数量
+    sub_num = show_numeric_input_box(yMax, xMax, "input subject number", TYPE_INTEGER); // 获取科目数量
+    stu_num = show_numeric_input_box(yMax, xMax, "input student number", TYPE_INTEGER); // 获取学生数量
     MainWin *main_win = new_main_win(yMax, xMax, sub_num, stu_num);
     show_help_win(yMax, xMax);
     main_oper(main_win);
